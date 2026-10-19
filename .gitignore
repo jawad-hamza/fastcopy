@@ -1,0 +1,5 @@
+# settings saved next to the exe in portable mode
+FastCopy.ini
+*.log
+Thumbs.db
+desktop.ini
