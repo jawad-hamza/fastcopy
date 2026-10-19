@@ -8,7 +8,7 @@ Free, open source, portable: **one .exe, nothing to install.**
 
 ## Download
 
-**[Download FastCopy.exe](https://github.com/jawad-hamza/fastcopy/raw/main/portable/FastCopy.exe)** (single portable file, 84 KB)
+**[Download FastCopy.exe](https://github.com/jawad-hamza/fastcopy/releases/latest/download/FastCopy.exe)** (single portable file, 84 KB). See also [all releases](https://github.com/jawad-hamza/fastcopy/releases).
 
 - Works on Windows 10 and 11 (uses .NET Framework 4.8, which is built in).
 - Just double-click it. No installer, no admin rights, no PowerShell.
