@@ -25,15 +25,15 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Jawad Hamza")]
 [assembly: AssemblyProduct("FastCopy")]
 [assembly: AssemblyCopyright("Copyright (c) 2026 Jawad Hamza. MIT License.")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
 
 namespace FastCopy
 {
     static class App
     {
         public const string Name = "FastCopy";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
         public const string Author = "Jawad Hamza";
         public const string RepoUrl = "https://github.com/jawad-hamza/fastcopy";
         public const string AuthorUrl = "https://github.com/jawad-hamza";
@@ -308,6 +308,29 @@ namespace FastCopy
     }
 
     // ------------------------------------------------------------------
+    // DPI scaling. WinForms' own AutoScaleMode.Dpi scales auto-sized panels a
+    // second time on top of their contents (rows holding a NumericUpDown grew
+    // to hundreds of pixels at 125%), so the forms use AutoScaleMode.None:
+    // fonts scale by themselves (they are in points), and every fixed pixel
+    // size goes through Px.
+    // ------------------------------------------------------------------
+    static class Px
+    {
+        public static readonly float K = ReadScale();
+
+        static float ReadScale()
+        {
+            try { using (var g = Graphics.FromHwnd(IntPtr.Zero)) return Math.Max(1f, g.DpiX / 96f); }
+            catch { return 1f; }
+        }
+
+        public static int S(int px) { return (int)Math.Round(px * K); }
+        public static Size Size(int w, int h) { return new Size(S(w), S(h)); }
+        public static Padding Pad(int all) { return new Padding(S(all)); }
+        public static Padding Pad(int l, int t, int r, int b) { return new Padding(S(l), S(t), S(r), S(b)); }
+    }
+
+    // ------------------------------------------------------------------
     // Visual bits: the app logo and the round "?" help badge.
     // ------------------------------------------------------------------
     static class Logo
@@ -349,7 +372,7 @@ namespace FastCopy
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint |
                      ControlStyles.SupportsTransparentBackColor | ControlStyles.ResizeRedraw, true);
             BackColor = Color.Transparent;
-            Size = new Size(size, size);
+            Size = Px.Size(size, size);
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -368,8 +391,8 @@ namespace FastCopy
                      ControlStyles.SupportsTransparentBackColor | ControlStyles.ResizeRedraw, true);
             SetStyle(ControlStyles.Selectable, false);
             BackColor = Color.Transparent;
-            Size = new Size(17, 17);
-            Margin = new Padding(1, 3, 6, 3);
+            Size = Px.Size(17, 17);
+            Margin = Px.Pad(1, 3, 6, 3);
             Anchor = AnchorStyles.Left;
             Cursor = Cursors.Help;
             TabStop = false;
@@ -400,8 +423,7 @@ namespace FastCopy
         public AboutForm()
         {
             SuspendLayout();
-            AutoScaleDimensions = new SizeF(96F, 96F);
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.None;   // sizes are scaled by Px (see there)
             Font = new Font("Segoe UI", 9F);
             Text = "About " + App.Name;
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -409,22 +431,22 @@ namespace FastCopy
             StartPosition = FormStartPosition.CenterParent;
             AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink;
             BackColor = SystemColors.Window;
-            Padding = new Padding(16);
+            Padding = Px.Pad(16);
 
             var root = new TableLayoutPanel { AutoSize = true, ColumnCount = 2, Dock = DockStyle.Fill };
             root.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             root.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             Controls.Add(root);
 
-            var logo = new LogoBox(64) { Margin = new Padding(0, 4, 16, 0), Anchor = AnchorStyles.Top };
+            var logo = new LogoBox(64) { Margin = Px.Pad(0, 4, 16, 0), Anchor = AnchorStyles.Top };
             root.Controls.Add(logo, 0, 0);
 
-            var text = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(0) };
+            var text = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = Px.Pad(0) };
             root.Controls.Add(text, 1, 0);
 
-            text.Controls.Add(new Label { Text = App.Name, AutoSize = true, Font = new Font("Segoe UI", 18F, FontStyle.Bold), Margin = new Padding(0) });
-            text.Controls.Add(new Label { Text = "Version " + App.Version + "  -  fast multi-threaded file copier for Windows", AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(2, 0, 0, 12) });
-            text.Controls.Add(new Label { Text = "Created by " + App.Author, AutoSize = true, Font = new Font("Segoe UI", 10.5F, FontStyle.Bold), Margin = new Padding(2, 0, 0, 2) });
+            text.Controls.Add(new Label { Text = App.Name, AutoSize = true, Font = new Font("Segoe UI", 18F, FontStyle.Bold), Margin = Px.Pad(0) });
+            text.Controls.Add(new Label { Text = "Version " + App.Version + "  -  fast multi-threaded file copier for Windows", AutoSize = true, ForeColor = SystemColors.GrayText, Margin = Px.Pad(2, 0, 0, 12) });
+            text.Controls.Add(new Label { Text = "Created by " + App.Author, AutoSize = true, Font = new Font("Segoe UI", 10.5F, FontStyle.Bold), Margin = Px.Pad(2, 0, 0, 2) });
             text.Controls.Add(Link(App.AuthorUrl.Replace("https://", ""), App.AuthorUrl));
             text.Controls.Add(Link(App.RepoUrl.Replace("https://", ""), App.RepoUrl));
             text.Controls.Add(new Label
@@ -432,15 +454,15 @@ namespace FastCopy
                 Text = "Free and open source under the MIT License.\r\n" +
                        "Free for everyone - personal or commercial use. You can share and\r\n" +
                        "modify it; please keep the credit to the author.",
-                AutoSize = true, Margin = new Padding(2, 12, 0, 8)
+                AutoSize = true, Margin = Px.Pad(2, 12, 0, 8)
             });
             text.Controls.Add(new Label
             {
                 Text = "The copying itself is done by robocopy, which is built into Windows.",
-                AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(2, 0, 0, 12)
+                AutoSize = true, ForeColor = SystemColors.GrayText, Margin = Px.Pad(2, 0, 0, 12)
             });
 
-            var ok = new Button { Text = "OK", Size = new Size(90, 30), DialogResult = DialogResult.OK, Anchor = AnchorStyles.Right };
+            var ok = new Button { Text = "OK", Size = Px.Size(90, 30), DialogResult = DialogResult.OK, Anchor = AnchorStyles.Right };
             root.Controls.Add(ok, 0, 1);
             root.SetColumnSpan(ok, 2);
             AcceptButton = ok; CancelButton = ok;
@@ -450,7 +472,7 @@ namespace FastCopy
 
         static LinkLabel Link(string text, string url)
         {
-            var l = new LinkLabel { Text = text, AutoSize = true, Margin = new Padding(2, 1, 0, 1) };
+            var l = new LinkLabel { Text = text, AutoSize = true, Margin = Px.Pad(2, 1, 0, 1) };
             l.LinkClicked += delegate { try { Process.Start(url); } catch { } };
             return l;
         }
@@ -476,18 +498,17 @@ namespace FastCopy
         public ConflictForm(long[] files, long[] bytes, List<string> sample)
         {
             SuspendLayout();
-            AutoScaleDimensions = new SizeF(96F, 96F);
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.None;   // sizes are scaled by Px (see there)
             Font = new Font("Segoe UI", 9F);
             Text = "Files already exist - " + App.Name;
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             MinimizeBox = false; MaximizeBox = false; ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(660, 480);
-            MinimumSize = new Size(560, 400);
+            ClientSize = Px.Size(660, 480);
+            MinimumSize = Px.Size(560, 400);
 
             var tips = new ToolTip { AutoPopDelay = 20000, InitialDelay = 150 };
-            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(14, 12, 14, 12) };
+            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = Px.Pad(14, 12, 14, 12) };
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             Controls.Add(root);
 
@@ -502,10 +523,10 @@ namespace FastCopy
             root.Controls.Add(new Label
             {
                 Text = string.Format("{0:N0} file(s) already exist in the destination and are different.", conflicts),
-                AutoSize = true, Font = new Font("Segoe UI", 11F, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8)
+                AutoSize = true, Font = new Font("Segoe UI", 11F, FontStyle.Bold), Margin = Px.Pad(0, 0, 0, 8)
             }, 0, 0);
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.Controls.Add(new Label { Text = lines.ToString(), AutoSize = true, Margin = new Padding(0, 0, 0, 8) }, 0, 1);
+            root.Controls.Add(new Label { Text = lines.ToString(), AutoSize = true, Margin = Px.Pad(0, 0, 0, 8) }, 0, 1);
 
             var list = new ListBox { Dock = DockStyle.Fill, IntegralHeight = false, HorizontalScrollbar = true, Font = new Font("Consolas", 9F) };
             list.BeginUpdate();
@@ -521,10 +542,10 @@ namespace FastCopy
                 Text = "Replace all  -  overwrite every file listed with your copy.\r\n" +
                        "Replace older only  -  keep files that are newer in the destination.\r\n" +
                        "Skip all  -  leave every existing file as it is; copy only new files.",
-                AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(0, 8, 0, 8)
+                AutoSize = true, ForeColor = SystemColors.GrayText, Margin = Px.Pad(0, 8, 0, 8)
             }, 0, 3);
 
-            var buttons = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Anchor = AnchorStyles.Right, Margin = new Padding(0) };
+            var buttons = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Anchor = AnchorStyles.Right, Margin = Px.Pad(0) };
             var replace = Choose("Replace all", ReplaceAll, "Overwrite every file in the list with your copy.", tips);
             var older = Choose("Replace older only", ReplaceOlder, "Overwrite only files where your copy is newer.\nFiles that are newer in the destination are kept.", tips);
             var skip = Choose("Skip all", SkipAll, "Don't touch any existing file. Only files that are missing get copied.", tips);
@@ -541,7 +562,7 @@ namespace FastCopy
 
         Button Choose(string text, int choice, string tip, ToolTip tips)
         {
-            var b = new Button { Text = text, Size = new Size(text.Length > 12 ? 150 : 110, 34), UseVisualStyleBackColor = true, DialogResult = DialogResult.OK };
+            var b = new Button { Text = text, Size = Px.Size(text.Length > 12 ? 150 : 110, 34), UseVisualStyleBackColor = true, DialogResult = DialogResult.OK };
             if (choice == Cancel) b.DialogResult = DialogResult.Cancel;
             b.Click += delegate { Choice = choice; };
             tips.SetToolTip(b, tip);
@@ -596,11 +617,10 @@ namespace FastCopy
         public MainForm()
         {
             SuspendLayout();
-            AutoScaleDimensions = new SizeF(96F, 96F);
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.None;   // sizes are scaled by Px (see there)
             Font = new Font("Segoe UI", 9F);
             Text = App.Name;
-            ClientSize = new Size(760, 600);
+            ClientSize = Px.Size(760, 600);
             StartPosition = FormStartPosition.CenterScreen;
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
@@ -623,49 +643,47 @@ namespace FastCopy
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            float scale;
-            using (var g = CreateGraphics()) scale = g.DpiX / 96f;
-            MinimumSize = new Size((int)(620 * scale), (int)(520 * scale));
+            MinimumSize = Px.Size(620, 610);   // tall enough for the whole Speed tab
         }
 
         // ---------------- layout helpers ----------------
 
         static Label Lbl(string text)
         {
-            return new Label { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 7, 3, 7) };
+            return new Label { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 7, 3, 7) };
         }
 
         static Label Note(string text)
         {
             var l = Lbl(text);
             l.ForeColor = SystemColors.GrayText;
-            l.Margin = new Padding(3, 0, 3, 8);
+            l.Margin = Px.Pad(3, 0, 3, 8);
             return l;
         }
 
         static NumericUpDown Num(int min, int max, int width)
         {
-            return new NumericUpDown { Minimum = min, Maximum = max, Width = width, TextAlign = HorizontalAlignment.Center, Anchor = AnchorStyles.Left, Margin = new Padding(3, 4, 14, 4) };
+            return new NumericUpDown { Minimum = min, Maximum = max, Width = width, TextAlign = HorizontalAlignment.Center, Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 4, 14, 4) };
         }
 
         static Button Btn(string text, int width, int height)
         {
-            return new Button { Text = text, Size = new Size(width, height), Anchor = AnchorStyles.Left, UseVisualStyleBackColor = true };
+            return new Button { Text = text, Size = Px.Size(width, height), Anchor = AnchorStyles.Left, UseVisualStyleBackColor = true };
         }
 
         static CheckBox Chk(string text)
         {
-            return new CheckBox { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 5, 3, 5) };
+            return new CheckBox { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 5, 3, 5) };
         }
 
         static TextBox Txt()
         {
-            return new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = new Padding(3, 5, 3, 5) };
+            return new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = Px.Pad(3, 5, 3, 5) };
         }
 
         static FlowLayoutPanel Flow(params Control[] items)
         {
-            var f = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = new Padding(0), Anchor = AnchorStyles.Left };
+            var f = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = Px.Pad(0), Anchor = AnchorStyles.Left };
             f.Controls.AddRange(items);
             return f;
         }
@@ -688,7 +706,8 @@ namespace FastCopy
         TableLayoutPanel NewPage(string title, bool twoColumns)
         {
             var page = new TabPage(title) { UseVisualStyleBackColor = false, BackColor = SystemColors.Window };
-            var t = new TableLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(10, 8, 10, 4), BackColor = SystemColors.Window };
+            // Two-column pages stretch their text boxes, which makes AutoScroll show a needless bar.
+            var t = new TableLayoutPanel { Dock = DockStyle.Fill, AutoScroll = !twoColumns, Padding = Px.Pad(10, 8, 10, 4), BackColor = SystemColors.Window };
             if (twoColumns)
             {
                 t.ColumnCount = 2;
@@ -697,8 +716,9 @@ namespace FastCopy
             }
             else
             {
+                // AutoSize (not Percent) so labels are never squeezed and wrapped word by word.
                 t.ColumnCount = 1;
-                t.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             }
             page.Controls.Add(t);
             tabs.TabPages.Add(page);
@@ -727,7 +747,7 @@ namespace FastCopy
         void BuildUi()
         {
             // The window is one 3-column table (label | stretch | button); only the tabs row grows.
-            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Padding = new Padding(8) };
+            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Padding = Px.Pad(8) };
             root.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             root.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -738,7 +758,7 @@ namespace FastCopy
             Row(root, Lbl("From"), txtFrom, btnFrom);
             Row(root, Lbl("To"), txtTo, btnTo);
 
-            tabs = new TabControl { Dock = DockStyle.Fill, Margin = new Padding(3, 8, 3, 6) };
+            tabs = new TabControl { Dock = DockStyle.Fill, Margin = Px.Pad(3, 8, 3, 6) };
             root.RowCount += 1;
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             root.Controls.Add(tabs, 0, root.RowCount - 1);
@@ -764,7 +784,7 @@ namespace FastCopy
             btnOpen.Enabled = false;
             btnAbout = Btn("About", 90, 38);
             btnAbout.Anchor = AnchorStyles.Right;
-            var actions = new TableLayoutPanel { AutoSize = true, ColumnCount = 5, Dock = DockStyle.Fill, Margin = new Padding(0, 4, 0, 4) };
+            var actions = new TableLayoutPanel { AutoSize = true, ColumnCount = 5, Dock = DockStyle.Fill, Margin = Px.Pad(0, 4, 0, 4) };
             for (int i = 0; i < 3; i++) actions.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             actions.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -774,7 +794,7 @@ namespace FastCopy
             actions.Controls.Add(btnAbout, 4, 0);
             Row(root, actions);
 
-            bar = new ProgressBar { Maximum = 1000, Height = 22, Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = new Padding(3, 4, 3, 4) };
+            bar = new ProgressBar { Maximum = 1000, Height = Px.S(22), Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = Px.Pad(3, 4, 3, 4) };
             Row(root, bar);
             lblStat1 = StatLine(root, "Pick a source and a destination, then press Start copy.");
             lblStat1.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
@@ -796,7 +816,7 @@ namespace FastCopy
 
         Label StatLine(TableLayoutPanel root, string text)
         {
-            var l = new Label { Text = text, AutoSize = false, AutoEllipsis = true, Height = 22, Anchor = AnchorStyles.Left | AnchorStyles.Right, TextAlign = ContentAlignment.MiddleLeft };
+            var l = new Label { Text = text, AutoSize = false, AutoEllipsis = true, Height = Px.S(22), Anchor = AnchorStyles.Left | AnchorStyles.Right, TextAlign = ContentAlignment.MiddleLeft };
             Row(root, l);
             return l;
         }
@@ -817,20 +837,14 @@ namespace FastCopy
                 "It can never beat the speed of the cable or the drive itself.\n" +
                 "If raising it stops helping, you've hit that limit."));
 
-            trkThreads = new TrackBar { Minimum = 1, Maximum = 128, TickFrequency = 8, SmallChange = 1, LargeChange = 8, BackColor = SystemColors.Window, Anchor = AnchorStyles.Left | AnchorStyles.Right };
+            // Fixed-width slider: a stretching column inside an auto-sized table collapses it.
+            trkThreads = new TrackBar { Minimum = 1, Maximum = 128, TickFrequency = 8, SmallChange = 1, LargeChange = 8, BackColor = SystemColors.Window, Width = Px.S(470), Anchor = AnchorStyles.Left, Margin = Px.Pad(0, 3, 8, 0) };
             numThreads = Num(1, 128, 70);
             lblThreadsNote = Lbl("");
             lblThreadsNote.ForeColor = SystemColors.GrayText;
             tips.SetToolTip(trkThreads, "Drag to choose how many files are copied at the same time.");
             tips.SetToolTip(numThreads, "Type an exact number of threads (1 - 128).");
-            var line = new TableLayoutPanel { ColumnCount = 3, AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
-            line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            line.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            line.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-            line.Controls.Add(trkThreads, 0, 0);
-            line.Controls.Add(numThreads, 1, 0);
-            line.Controls.Add(lblThreadsNote, 2, 0);
-            Row(t, line);
+            Row(t, Flow(trkThreads, numThreads, lblThreadsNote));
 
             var presets = Flow();
             foreach (int v in new[] { 1, 8, 16, 32, 64, 128 })
@@ -879,12 +893,12 @@ namespace FastCopy
             optionPanels.Add(t);
 
             // Radio buttons must share one parent to act as a group.
-            var modes = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Margin = new Padding(0, 0, 0, 6) };
+            var modes = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Margin = Px.Pad(0, 0, 0, 6) };
             modes.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             modes.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            rbCopy = new RadioButton { Text = "Copy - add and update files, never delete anything", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 5, 0, 5) };
-            rbMirror = new RadioButton { Text = "Mirror - make the destination identical (DELETES extra files in destination)", AutoSize = true, ForeColor = Red, Anchor = AnchorStyles.Left, Margin = new Padding(3, 5, 0, 5) };
-            rbMove = new RadioButton { Text = "Move - copy, then DELETE the originals from the source", AutoSize = true, ForeColor = Red, Anchor = AnchorStyles.Left, Margin = new Padding(3, 5, 0, 5) };
+            rbCopy = new RadioButton { Text = "Copy - add and update files, never delete anything", AutoSize = true, Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 5, 0, 5) };
+            rbMirror = new RadioButton { Text = "Mirror - make the destination identical (DELETES extra files in destination)", AutoSize = true, ForeColor = Red, Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 5, 0, 5) };
+            rbMove = new RadioButton { Text = "Move - copy, then DELETE the originals from the source", AutoSize = true, ForeColor = Red, Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 5, 0, 5) };
             AddMode(modes, rbCopy, "The safe choice.\n\n" +
                 "Copies new and changed files into the destination.\n" +
                 "Nothing is ever deleted - not in the source, not in the destination.");
@@ -897,7 +911,7 @@ namespace FastCopy
                 "When it finishes, the files only exist in the destination.");
             Row(t, modes);
 
-            cmbExisting = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 380, Anchor = AnchorStyles.Left, Margin = new Padding(8, 4, 3, 4) };
+            cmbExisting = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = Px.S(380), Anchor = AnchorStyles.Left, Margin = Px.Pad(8, 4, 3, 4) };
             cmbExisting.Items.AddRange(new object[] {
                 "Ask me (like Windows: replace or skip)",
                 "Replace if changed (size or date differs)",
@@ -979,11 +993,11 @@ namespace FastCopy
                 "Open a terminal and run  robocopy /?  to see them all."), txtExtra);
             Row(t, null, Note("Added to the command as-is, e.g.  /COPY:DATS  /XA:H  /IPG:50\n" +
                               "Avoid /NFL /NJS /QUIET /V - they break the progress display."));
-            cmbDone = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260, Anchor = AnchorStyles.Left, Margin = new Padding(3, 4, 3, 4) };
+            cmbDone = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = Px.S(260), Anchor = AnchorStyles.Left, Margin = Px.Pad(3, 4, 3, 4) };
             cmbDone.Items.AddRange(new object[] { "Do nothing", "Play a sound", "Open the destination folder" });
             Row(t, Help(Lbl("When finished"), "What FastCopy should do after a copy finishes without errors."), cmbDone);
             btnReset = Btn("Reset all options", 160, 30);
-            btnReset.Margin = new Padding(3, 12, 3, 3);
+            btnReset.Margin = Px.Pad(3, 12, 3, 3);
             tips.SetToolTip(btnReset, "Put every option back to its default. Your From/To folders are kept.");
             Row(t, btnReset);
             EndRows(t);
